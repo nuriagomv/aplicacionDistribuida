@@ -1,5 +1,5 @@
-from multiprocessing.connection import Listener
-from multiprocessing import Process
+from multiprocessing.connection import Listener, Client
+from multiprocessing import Process, Manager
 from multiprocessing.connection import AuthenticationError
 from time import time
 
@@ -32,20 +32,25 @@ def ahorcado(jugador1, jugador2):
 
 
 if __name__ == '__main__':
-    servidor = Listener(address=('127.0.0.1', 6000), authkey=b'secret password')
+    servidor = Listener(address=('127.0.0.1', 6000), authkey=b'secret password SERVER')
     print ('El servidor del juego del ahorcado se ha iniciado')
+
+    m = Manager()
+    jugadores = m.dict()
 
     while True:
         print ('\nEsperando jugadores...')
         try:
             jugador = servidor.accept()  #acepto conexión              
-            print ('Conexión aceptada para Jugador 1 desde', servidor.last_accepted)
-            jugador1 = jugador
-            print('Tenemos al jugador 1. Esperando al segundo jugador...')
-            jugador2 = servidor.accept()
-            print ('Conexión aceptada para Jugador 2 desde', servidor.last_accepted)
+            print ('Conexión aceptada para jugar desde', servidor.last_accepted)
+            infoJugador = jugador.recv()
+            jugadores[servidor.last_accepted] = infoJugador
+
+
             juego = Process(target=ahorcado, args=(jugador1,jugador)) #y se las paso a un proceso
             juego.start()
+
+            
         except AuthenticationError:
             print ('Conexión rechazada, contraseña incorrecta')
         
