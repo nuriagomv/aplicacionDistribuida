@@ -29,9 +29,16 @@ if __name__ == '__main__':
 
     conectado = True
     while conectado:
+        try:
+            m = jugador.recv()
+        except EOFError:
+            print('No recibido, conexión abruptamente cerrada por el cliente')
+            break
+        print (m)
+        
         #jugador.send(input('Elige tu apodo como jugador: '))
-        time.sleep(1) #pa que no se me cierre el juego mientras veo lo que tengo q definir aqui
+        #time.sleep(1) #pa que no se me cierre el juego mientras veo lo que tengo q definir aqui
 
-    jugador.close()
-    jugadorListener.terminate()
-    print("JUEGO FINALIZADO")
+    #jugador.close()
+    #jugadorListener.terminate()
+    #print("JUEGO FINALIZADO")

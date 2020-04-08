@@ -41,9 +41,9 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
         Process(target=notificar_inicio_juego, args=(pareja,)).start()
         jugadores.clear()
         cerrojo.release()
-    
-    #jugador.close()
-    #print ('Conexion', ipPuerto, 'cerrada')
+        
+    jugador.close()
+    print ('Conexion', ipPuerto, 'cerrada')
 
 
 
