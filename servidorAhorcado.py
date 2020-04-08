@@ -4,19 +4,6 @@ import random
 import time
 
 
-def clear_jugador(clientes, ipPuerto):
-    clientes.pop(ipPuerto[1])
-
-def palabraContrincante(board, ipPuerto, m):
-    board[ipPuerto[1]] = (m, board[ipPuerto[1]][1]+.05,'#1200FF')
-    return board.items()
-
-
-#def ahorcado(jugador, turno, ipPuerto, palabraAdivinar):
- #   if turno == 1:
-
-  #  if turno == 2:
-
 
 def pedirPalabras(conn):
     try:
