@@ -50,7 +50,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
 if __name__ == '__main__':
 
-    servidor = Listener(address=('127.0.0.1', 6005), authkey=b'secret password SERVER')
+    servidor = Listener(address=('127.0.0.1', 6000), authkey=b'secret password SERVER')
     print ('Iniciando servidor del ahorcado...')
     
     manager = Manager()

@@ -19,7 +19,7 @@ def jugador_listener():
 if __name__ == '__main__':
 
     print ('intentando conectar con en el servidor para jugar al ahorcado...')
-    jugador = Client(address = ('127.0.0.1', 6005), authkey = b'secret password SERVER')
+    jugador = Client(address = ('127.0.0.1', 6000), authkey = b'secret password SERVER')
     print ('Conexión aceptada')
     jugador.send(local_listener)
     print ('enviando la información de tu listener como jugador...')
