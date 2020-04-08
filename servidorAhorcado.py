@@ -18,23 +18,36 @@ def palabraContrincante(board, ipPuerto, m):
   #  if turno == 2:
 
 
+def pedirPalabras(conn):
+    try:
+        palabra = conn.recv()
+        print(palabra)
+    except EOFError:
+        print('algo no ha funcionado')
+    #return palabra
+
+
 def notificar_inicio_juego(pareja):
     print('INICIO JUEGO')
     lonPalabra = random.randint(4,8)
-    for jugador, jugador_info in pareja.items():
+    for (jugador, [jugador_info, _]) in pareja.items():
         print ("Mandando longitud de palabra a ", jugador)
         conn = Client(address=jugador_info[0], authkey=jugador_info[1])
         conn.send("Elige una palabra de longitud "+str(lonPalabra))
+
+        # Process(target=pedirPalabras, args=(conn,)).start()
         conn.close()
+
 
 
 def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     j = len(jugadores)
+    apodo = jugadores[ipPuerto][1]
     if j == 1:
-        jugador.send('Hola Jugador 1. \n Esperando al segundo jugador...')
+        jugador.send('Hola '+apodo+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
 
     if j == 2:
-        jugador.send('Hola Jugador 2. \n Ya tenemos dos jugadores, empieza la partida.')
+        jugador.send('Hola '+apodo+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida.')
 
         cerrojo.acquire()
         pareja = jugadores.copy()
@@ -43,7 +56,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
         cerrojo.release()
         
     jugador.close()
-    print ('Conexion', ipPuerto, 'cerrada')
+    #print ('Conexion', ipPuerto, 'cerrada')
 
 
 
@@ -64,8 +77,8 @@ if __name__ == '__main__':
             ipPuerto = servidor.last_accepted                
             print ('Jugador aceptado desde la IP y puerto siguientes: ', ipPuerto)
             
-            infoListenerJugador = jugador.recv()
-            jugadores[ipPuerto] = infoListenerJugador
+            infoListenerApodoJugador = jugador.recv()
+            jugadores[ipPuerto] = infoListenerApodoJugador
             
             p = Process(target=serve_client, args=(jugador, ipPuerto, jugadores, cerrojo))
             p.start()
