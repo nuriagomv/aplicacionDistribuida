@@ -2,7 +2,7 @@ from multiprocessing.connection import Client, Listener
 from multiprocessing import Process
 import time
 
-local_listener = (('127.0.0.1', 5001), b'secret password CLIENT')
+local_listener = (('127.0.0.1', 5002), b'secret password CLIENT')
 
 def jugador_listener():
     jugadorListener = Listener(address = local_listener[0], authkey = local_listener[1])
