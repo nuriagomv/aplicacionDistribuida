@@ -8,10 +8,20 @@ import time
 def pedirPalabras(conn):
     try:
         palabra = conn.recv()
-        print(palabra)
     except EOFError:
         print('algo no ha funcionado')
-    #return palabra
+    return palabra
+
+
+def colocarPalabra(pareja, palabra, ipPuerto):
+    pareja['palabras'] = [(1, 'palabra1'), (2, 'palabra2')]
+    i = -1
+    for (_, items) in pareja.items():
+        i += 1
+        if items == pareja[ipPuerto]:
+            break
+    pareja['palabras'][i] = (i+1, palabra)
+    print('El jugador ', i+1, ' propone la palabra: ', palabra)
 
 
 def notificar_inicio_juego(pareja):
@@ -26,16 +36,15 @@ def notificar_inicio_juego(pareja):
         conn.close()
 
 
-def saludar(ipPuerto, jugadores):
-    j = len(jugadores)
-    [jugador_info, apodo] = jugadores[ipPuerto]
-    jugador = Client(address= jugador_info[0], authkey=jugador_info[1])
-    if j == 1:
-        jugador.send('Hola '+apodo+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
-    if j == 2:
-        jugador.send('Hola '+apodo+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida...')
-    jugador.close()
-    time.sleep(2)  #por no empezar tan pronto el juego
+#def saludar(ipPuerto, jugadores):
+#    j = len(jugadores)
+#    [jugador_info, apodo] = jugadores[ipPuerto]
+#    jugador = Client(address= jugador_info[0], authkey=jugador_info[1])
+#    if j == 1:
+#        jugador.send('Hola '+apodo+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
+#    if j == 2:
+#        jugador.send('Hola '+apodo+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida...')
+#    jugador.close()
 
 
 
@@ -52,9 +61,14 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
             break
     
     notificar_inicio_juego(pareja)
+ 
+    palabra = pedirPalabras(jugador)
+
+    colocarPalabra(pareja, palabra, ipPuerto)
+    print(pareja) #borrar cuando ya compruebe que el diccionario está bien
 
 
-
+    #ahora aqui ya debe empezar el bucle del ahorcado
     juegoContinua = True
     while juegoContinua:
         try:
@@ -62,8 +76,10 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
         except EOFError:
             print ('conexión abruptamente cerrada por el jugador')
             juegoContinua = False
-        print ('Mensaje recibido: ', m, ' de ', ipPuerto)
-        if m == "quit":    
+        print ('Mensaje recibido: ', m, ' de ', ipPuerto) 
+
+
+        if m == "me rindo":    
             juegoContinua = False
             jugador.close() 
     #del jugadores[ipPuerto]                       

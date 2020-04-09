@@ -45,9 +45,6 @@ if __name__ == '__main__':
     jugador.send([local_listener, apodo])
     print ('enviando la información de tu listener como jugador...')
 
-    saludo = jugador.recv()
-    print(saludo)
-
     manager = Manager()
     avisos = manager.dict()
     avisos['longitudDada'] = ["no"]
