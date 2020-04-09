@@ -1,16 +1,15 @@
 from multiprocessing.connection import Client, Listener
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 import time
+
 
 local_listener = (('127.0.0.1', 5002), b'secret password CLIENT')
 
 def enviarPalabraParaContrincante(longitud):
-    l = int(longitud[len(longitud)-1]) #ultimo elemento del mensaje en el que se indica la longitud
     while True:
-        print('Adivina una letra.')
         palabra = input('Propón una palabra para tu contrincante de la longitud indicada: ')
         palabra.lower()
-        if len(palabra) != l:
+        if len(palabra) != longitud:
             print('Por favor, que sea de la longitud indicada.')
         elif not all([char in "abcdefghijklmnñopqrstuvwxyz" for char in palabra]):
             print('Por favor, ingresa una PALABRA.')
@@ -18,18 +17,21 @@ def enviarPalabraParaContrincante(longitud):
             return palabra
 
 
-
-def jugador_listener():
+def jugador_listener(avisos):
     jugadorListener = Listener(address = local_listener[0], authkey = local_listener[1])
     
-    servidor = jugadorListener.accept()
+    while True:
+        servidor = jugadorListener.accept()
+        mensaje = servidor.recv()
+        print ('Mensaje del servidor recibido:', mensaje)
 
-    longitud = servidor.recv()
-    print ('Primer mensaje del servidor recibido:', longitud)
+        if "Elige una palabra" in mensaje:
+            avisos['longitudDada'] = ["sí", int(mensaje[len(mensaje)-1])]
 
-    #palabraParaContrincante = enviarPalabraParaContrincante(longitud)
 
-    #servidor.send(palabraParaContrincante)
+
+
+
 
 
 
@@ -42,16 +44,25 @@ if __name__ == '__main__':
     jugador.send([local_listener, apodo])
     print ('enviando la información de tu listener como jugador...')
 
-    jugadorListener = Process(target=jugador_listener, args=())
+    saludo = jugador.recv()
+    print(saludo)
+
+    manager = Manager()
+    avisos = manager.dict()
+    avisos['longitudDada'] = ["no"]
+    avisos['juegoFinalizado'] = "no"
+
+    jugadorListener = Process(target=jugador_listener, args=(avisos,))
     jugadorListener.start()
 
-    try:
-        saludo = jugador.recv()
-        print (saludo)
-    except EOFError:
-        print('No recibido, conexión abruptamente cerrada')
-        
-        
+    while not (avisos['juegoFinalizado'] == "sí") :
+
+        if (avisos['longitudDada'][0] == "sí"):
+            palabraElegida = enviarPalabraParaContrincante(avisos['longitudDada'][1])
+            jugador.send(palabraElegida)
+
+
+
         
     #jugador.close()
     #jugadorListener.terminate()

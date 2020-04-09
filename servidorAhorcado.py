@@ -26,24 +26,52 @@ def notificar_inicio_juego(pareja):
         conn.close()
 
 
-
-def serve_client(jugador, ipPuerto, jugadores, cerrojo):
+def saludar(ipPuerto, jugadores):
     j = len(jugadores)
-    apodo = jugadores[ipPuerto][1]
+    [jugador_info, apodo] = jugadores[ipPuerto]
+    jugador = Client(address= jugador_info[0], authkey=jugador_info[1])
     if j == 1:
         jugador.send('Hola '+apodo+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
-
     if j == 2:
-        jugador.send('Hola '+apodo+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida.')
-
-        cerrojo.acquire()
-        pareja = jugadores.copy()
-        Process(target=notificar_inicio_juego, args=(pareja,)).start()
-        jugadores.clear()
-        cerrojo.release()
-        
+        jugador.send('Hola '+apodo+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida...')
     jugador.close()
-    #print ('Conexion', ipPuerto, 'cerrada')
+    time.sleep(2)  #por no empezar tan pronto el juego
+
+
+
+
+def serve_client(jugador, ipPuerto, jugadores, cerrojo):
+
+    #formar la pareja
+    while True:
+        if len(jugadores) == 2:
+            cerrojo.acquire()
+            pareja = jugadores.copy()
+            jugadores.clear()
+            cerrojo.release()
+            break
+    
+    notificar_inicio_juego(pareja)
+
+
+
+    juegoContinua = True
+    while juegoContinua:
+        time.sleep(1)
+        try:
+            m = jugador.recv()
+        except EOFError:
+            print ('conexión abruptamente cerrada por el jugador')
+            juegoContinua = False
+        print ('received message:', m, 'from', ipPuerto)
+        if m == "quit":    
+            juegoContinua = False
+            jugador.close() 
+    #del jugadores[ipPuerto]                       
+    #notify_quit_client(id, clients)            
+    print (ipPuerto, 'conexión cerrada')
+        
+    
 
 
 
@@ -67,8 +95,16 @@ if __name__ == '__main__':
             infoListenerApodoJugador = jugador.recv()
             jugadores[ipPuerto] = infoListenerApodoJugador
             
+            #saluda antes de pasar la conexión a un proceso
+            j = len(jugadores)
+            if j == 1:
+                jugador.send('Hola '+infoListenerApodoJugador[1]+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
+            if j == 2:
+                jugador.send('Hola '+infoListenerApodoJugador[1]+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida...')
+
             p = Process(target=serve_client, args=(jugador, ipPuerto, jugadores, cerrojo))
             p.start()
+
         except AuthenticationError:
             print ('Conexión rechaza, contraseña incorrecta')
 
