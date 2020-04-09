@@ -57,19 +57,18 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
     juegoContinua = True
     while juegoContinua:
-        time.sleep(1)
         try:
             m = jugador.recv()
         except EOFError:
             print ('conexión abruptamente cerrada por el jugador')
             juegoContinua = False
-        print ('received message:', m, 'from', ipPuerto)
+        print ('Mensaje recibido: ', m, ' de ', ipPuerto)
         if m == "quit":    
             juegoContinua = False
             jugador.close() 
     #del jugadores[ipPuerto]                       
     #notify_quit_client(id, clients)            
-    print (ipPuerto, 'conexión cerrada')
+    print (ipPuerto, 'ha cerrado conexión')
         
     
 
