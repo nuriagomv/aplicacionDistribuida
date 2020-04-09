@@ -17,19 +17,33 @@ def enviarPalabraParaContrincante(longitud):
             return palabra
 
 
+def obtenerIntento(letrasProbadas):
+    while True:
+        time.sleep(1)
+        intento = input('Adivina una de las letras: ')
+        intento = intento.lower()
+        if len(intento) != 1:
+            print('Por favor, introduce UNA letra.')
+        elif intento in letrasProbadas:
+            print('Ya has probado esa letra. Elige otra.')
+        elif intento not in 'abcdefghijklmnñopqrstuvwxyz':
+            print('Por favor ingresa una LETRA.')
+        else:
+            return intento
+
+
+
 def jugador_listener(avisos):
     jugadorListener = Listener(address = local_listener[0], authkey = local_listener[1])
     
     while True:
+
         servidor = jugadorListener.accept()
         mensaje = servidor.recv()
-        print ('Mensaje del servidor recibido:', mensaje)
+        print ('Mensaje del servidor recibido: ', mensaje)
 
         if "Elige una palabra" in mensaje:
             avisos['longitudDada'] = ["sí", int(mensaje[len(mensaje)-1])]
-
-
-
 
 
 
@@ -51,19 +65,30 @@ if __name__ == '__main__':
     avisos = manager.dict()
     avisos['longitudDada'] = ["no"]
     avisos['juegoFinalizado'] = "no"
+    avisos['escucharOcontestar'] = "escuchar"
 
     jugadorListener = Process(target=jugador_listener, args=(avisos,))
     jugadorListener.start()
 
-    while not (avisos['juegoFinalizado'] == "sí") :
-
+    while True:
         if (avisos['longitudDada'][0] == "sí"):
-            palabraElegida = enviarPalabraParaContrincante(avisos['longitudDada'][1])
+            palabraElegida = enviarPalabraParaContrincante( avisos['longitudDada'][1] )
             jugador.send(palabraElegida)
+            break
+    
+    letrasProbadas = []
+    while not (avisos['juegoFinalizado'] == "sí") :
+        intento =  obtenerIntento(letrasProbadas)
+        jugador.send(intento)
+        letrasProbadas.append(intento)
+        respuesta = jugador.recv()
+        print(respuesta)
+        if "HAS GANADO" in respuesta:
+            avisos['juegoFinalizado'] = "sí"
 
 
 
-        
-    #jugador.close()
-    #jugadorListener.terminate()
-    #print("JUEGO FINALIZADO")
+
+    jugador.close()
+    jugadorListener.terminate()
+    print("JUEGO FINALIZADO")
