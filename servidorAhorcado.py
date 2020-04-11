@@ -121,9 +121,8 @@ def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSe
     return envio
 
 def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
-    #ahora aqui ya debe empezar el bucle del ahorcado
-    #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando el otro jugador gane
-    #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO DE SERVER_CLIENT
+    
+    #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO
 
     juegoContinua = True
     letrasCorrectas = []
@@ -131,6 +130,7 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
     nIntentosFallidos = 0
 
     while juegoContinua:
+        #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando algun jugador gane
         juegoContinua = not ( nIntentosFallidos==nTotalIntentos or
                             any([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
         
@@ -140,19 +140,27 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
         else:
             letrasIncorrectas.append(letra)
         
-        #si ha acertado todas las letras
+        #si ha acertado todas las letras es ganador
         if all([char in letrasCorrectas for char in palabra]):
             cerrojo.acquire()
-            jugadores[ipPuerto][4] = 'ganador'
+            jugadores[ipPuerto][4] = jugadores[ipPuerto][0:3]+['ganador']  #NO ME ACTUALIZA ESTO!!!!!!!!
             cerrojo.release()
-            jugador.send("HAS GANADO, LA PALABRA ERA "+palabra)
-            jugador.close()
+            jugador.send("HAS GANADO, la palabra era "+palabra)
+            #jugador.close()
+            break
+        
+        #si ha agotado todos sus intentos
+        nIntentosFallidos = len(letrasIncorrectas)
+        if nIntentosFallidos == nTotalIntentos:
+            cerrojo.acquire()
+            jugadores[ipPuerto][4] = jugadores[ipPuerto][0:3]+['agotado intentos'] #NO ME ACTUALIZA ESTO!!!!!!!!
+            cerrojo.release()
+            jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
+            print(jugadores)
             break
 
         jugador.send( '\n'+mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
-        nIntentosFallidos = len(letrasIncorrectas)
-
-
+        
 
 def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
@@ -205,15 +213,35 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                     cerrojo.release()
 
     jugador.send('COMIENZA EL JUEGO DEL  A H O R C A D O')
-    ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja)
+    ahorcado(jugador, ipPuerto, palabracontraria(partida, jugadores, ipPuerto), jugadores, partida, cerrojo, pareja)
 
-    time.sleep(100)
-    jugador.close() #DEBERÉ CERRAR A AMBOS JUGADORES
-    
+    if jugadores[ipPuerto][4] == 'ganador':
+        jugador.send("ENHORABUENA")
+    if jugadores[ipPuerto][4] == 'sigue probando':
+        jugador.send("JUEGO FINALIZADO: TU CONTRINCANTE HA GANADO")
+    if jugadores[ipPuerto][4] == 'agotado intentos': # mi contrincante tiene oportunidad de ganar todavia
+        for (ip,_) in [list(jugadores.items())[i] for i in pareja]:
+            if ip != ipPuerto:
+                contrincante = ip
+                break
+        while True:
+            if jugadores[contrincante] == 'ganador':
+                jugador.send("FINALMENTE TU CONTRINCANTE HA GANADO LA PARTIDA")
+                break
+            elif jugadores[contrincante] == 'agotado intentos':
+                jugador.send("FINALMENTE NINGUNO DE LOS DOS HABEIS GANADO LA PARTIDA")
+                break
+            else:
+                jugador.send("espera a ver qué pasa con tu contrincante...")
+                time.sleep(2)
 
-    #ADEMAS ME QUEDA EL CASO DE COMPROBAR SI TERMINA CUANDO AGOTA INTENTOS
-    # SI TERMINARIA PARA AMBOS O SOLO PARA UNO Y ESPERA O QUE PASA
-    #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS
+    jugador.close()
+    cerrojo.acquire()
+    del jugadores[ipPuerto] # lo borro del diccionario
+    cerrojo.release()
+
+
+    #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS EN UN TOPIC DEL BROKER WILD.MAT.UCM.ES
         
     
 if __name__ == '__main__':

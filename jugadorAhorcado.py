@@ -59,9 +59,15 @@ if __name__ == '__main__':
         letrasProbadas.append(intento)
         respuesta = jugador.recv()
         print(respuesta)
-        if "HAS GANADO" in respuesta:
+        if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta):
             continuar = False
-
+    
+    #respuesta final por parte del servidor
+    while True:
+        fin = jugador.recv()
+        print(fin)
+        if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin):
+            break
 
     jugador.close()
-    print("JUEGO FINALIZADO")
+    print("FIN")
