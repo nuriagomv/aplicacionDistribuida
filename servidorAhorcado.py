@@ -228,10 +228,10 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                 contrincante = ip
                 break
         while True:
-            if jugadores[contrincante] == 'ganador':
+            if jugadores[contrincante][4] == 'ganador':
                 jugador.send("FINALMENTE TU CONTRINCANTE HA GANADO LA PARTIDA")
                 break
-            elif jugadores[contrincante] == 'agotado intentos':
+            elif jugadores[contrincante][4] == 'agotado intentos':
                 jugador.send("FINALMENTE NINGUNO DE LOS DOS HABEIS GANADO LA PARTIDA")
                 break
             else:

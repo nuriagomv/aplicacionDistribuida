@@ -61,7 +61,7 @@ if __name__ == '__main__':
             respuesta = jugador.recv()
             print(respuesta)
         except:
-            print('El servidor ya no te manda más intentos. Veamos por qué puede ser')
+            print('parece que ha habido algun error')
         if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta):
             continuar = False
     
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin):
                 break
         except:
-            print("puede que el fallo esté aquí")
+            print("parece que algo está fallando")
 
     #jugador.close()
     print("FIN")
