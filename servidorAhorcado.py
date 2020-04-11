@@ -1,7 +1,8 @@
-from multiprocessing.connection import Listener, Client, AuthenticationError
+from multiprocessing.connection import Listener, AuthenticationError #, Client
 from multiprocessing import Process, Lock, Manager
 import random
 import time
+import numpy as np
 
 
 
@@ -67,6 +68,51 @@ listaMonigotes = ['''
 nTotalIntentos = len(listaMonigotes) - 1
 
 
+
+def decidirPartidaParaJugador(jugadores, ipPuerto):
+    claves = np.array( list(jugadores.keys()) )
+    pos = list ( np.where(claves == ipPuerto)[0] )[0] + 1
+    if pos % 2 == 0: # la posición es par
+        partida = pos/2
+    else: # la posición es impar
+        partida = (pos-1)/2 + 1
+    return int(pos), int(partida)
+
+def saludar(apodo, pos, jugador):
+    if pos % 2 != 0:
+        jugador.send('Hola '+apodo+' tu papel es de Jugador 1.')
+    else:
+        jugador.send('Hola '+apodo+' tu papel es de Jugador 2.')
+
+def establecerLongitudPalabra(partida, jugadores, cerrojo):
+    lonPalabra = random.randint(4,6)
+    for (ip, lista) in jugadores.items():
+            if lista[0] == partida:
+                if len(lista) < 3:
+                    cerrojo.acquire()
+                    jugadores[ip] = jugadores[ip] + [lonPalabra]
+                    cerrojo.release()
+
+def notificar_inicio_juego(jugador, ipPuerto, jugadores):
+    lonPalabra = jugadores[ipPuerto][2]
+    print ("Mandando longitud de palabra a ", jugadores[ipPuerto][1], ' que está en ', ipPuerto)
+    jugador.send("Elige una palabra de longitud "+str(lonPalabra))
+
+def pedirPalabraOLetra(jugador): 
+    try:
+        m = jugador.recv()
+    except EOFError:
+        print('algo no ha funcionado')
+    return m
+
+def palabracontraria(partida, jugadores, ipPuerto):
+    for (ip, lista) in jugadores.items():
+            if lista[0] == partida:
+                if ip != ipPuerto:
+                    palabraContr = lista[3]
+                    break
+    return palabraContr
+
 def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSecreta):
     espaciosVacios = '_' * len(palabraSecreta)
     for i in range(len(palabraSecreta)): # completar los espacios vacíos con las letras adivinadas
@@ -76,59 +122,20 @@ def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSe
     return envio
 
 
-def pedirPalabraOLetra(conn): 
-    try:
-        m = conn.recv()
-    except EOFError:
-        print('algo no ha funcionado')
-    return m
+#def localizarJugador(pareja, ipPuerto):
+#    i = -1
+#    for key in pareja.keys():
+#        i += 1
+#        if key == ipPuerto:
+#            break
+#    return i
 
 
-def localizarJugador(pareja, ipPuerto):
-    i = -1
-    for (_, items) in pareja.items():
-        i += 1
-        if items == pareja[ipPuerto]:
-            break
-    return i
-
-
-def colocarPalabra(pareja, palabra, ipPuerto):
-    pareja['palabras'] = [(1, 'palabra'), (2, 'palabra')]
-
-    i = localizarJugador(pareja, ipPuerto)
-
-    pareja['palabras'][i] = (i+1, palabra)
-    print('El jugador ', i+1, ' propone la palabra: ', palabra)
-
-
-def notificar_inicio_juego(pareja):
-    print('INICIO JUEGO')
-    lonPalabra = random.randint(4,8)
-    for (jugador, [jugador_info, _]) in pareja.items():
-        print ("Mandando longitud de palabra a ", jugador)
-        conn = Client(address=jugador_info[0], authkey=jugador_info[1])
-        conn.send("Elige una palabra de longitud "+str(lonPalabra))
-
-        # Process(target=pedirPalabraOLetra, args=(conn,)).start()
-        conn.close()
-
-
-#def saludar(ipPuerto, jugadores):
-#    j = len(jugadores)
-#    [jugador_info, apodo] = jugadores[ipPuerto]
-#    jugador = Client(address= jugador_info[0], authkey=jugador_info[1])
-#    if j == 1:
-#        jugador.send('Hola '+apodo+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
-#    if j == 2:
-#        jugador.send('Hola '+apodo+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida...')
-#    jugador.close()
-
-
-def palabracontraria(palabra, diccionario):
-  for (_,p) in diccionario['palabras']:
-    if p != palabra:
-      return p
+#def colocarPalabra(pareja, palabra, ipPuerto):
+#    i = localizarJugador(pareja, ipPuerto)
+#    pareja['palabras'] = [(1, 'default'), (2, 'default')]
+#    pareja['palabras'][i] = (i+1, palabra)
+#    print('El jugador ', i+1, ' propone la palabra: ', palabra)
 
 
 def ahorcado(jugador, ipPuerto, palabra, pareja):
@@ -137,7 +144,7 @@ def ahorcado(jugador, ipPuerto, palabra, pareja):
     #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO DE SERVER_CLIENT
     jugador_info, _ = pareja[ipPuerto]
     conn = Client(address=jugador_info[0], authkey=jugador_info[1])
-    conn.send('COMIENZA EL JUEGO DEL A H O R C A D O')
+    
     juegoContinua = True
     letrasCorrectas = []
     letrasIncorrectas = []
@@ -168,28 +175,55 @@ def ahorcado(jugador, ipPuerto, palabra, pareja):
 
 def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
-    #formar la pareja
+    #asigno una partida al jugador:
+    pos, partida = decidirPartidaParaJugador(jugadores, ipPuerto)
+    apodo = jugadores[ipPuerto][0]
+    
+    cerrojo.acquire()
+    jugadores[ipPuerto] = [partida] + jugadores[ipPuerto]
+    cerrojo.release()
+    
+    saludar(apodo, pos, jugador)
+
+    #espero a que haya dos jugadores asignados a la misma partida para empezar
     while True:
-        if len(jugadores) == 2:
-            cerrojo.acquire()
-            pareja = jugadores.copy()
-            jugadores.clear()
-            cerrojo.release()
+        if sum( [lista[0]==partida for (_,lista) in jugadores.items()] ) != 2:
+            jugador.send('Esperando al segundo jugador...')
+            time.sleep(3)
+        else:
+            jugador.send('Ya sois dos jugadores AÑADIR COMO SE LLAMA EL COMPAÑERO, empieza la partida...')
             break
     
-    notificar_inicio_juego(pareja)
+    establecerLongitudPalabra(partida, jugadores, cerrojo)
+
+    notificar_inicio_juego(jugador, ipPuerto, jugadores)
     
-    # A PARTIR DE AQUI FALLA PARA EL SEGUNDO JUGADOR QUE ABRO
+    #añado la palabra a la lista del jugador en el diccionario
     palabra = pedirPalabraOLetra(jugador)
+    cerrojo.acquire()
+    jugadores[ipPuerto] = jugadores[ipPuerto] + [palabra]
+    cerrojo.release()
 
-    colocarPalabra(pareja, palabra, ipPuerto)
-    pareja['haGanado'] = [(1,'no'), (2,'no')]
+    #bucle que no permita continuar hasta que los 2 jugadores tienen la palabra colocada
+    nJugadoresConPalabraColocada = 0
+    while nJugadoresConPalabraColocada != 2:
+        for (_,lista) in jugadores.items():
+            if lista[0] == partida:
+                if len(lista) == 4:
+                    nJugadoresConPalabraColocada += 1
+                else:
+                    jugador.send("Espera porque tu compi todavía no ha elegido la palabra para ti...")
+                    time.sleep(3)
+    
+    
+    #colocarPalabra(pareja, palabra, ipPuerto)
+    #pareja['haGanado'] = [(1,'no'), (2,'no')]
+    print(jugadores) #borrar cuando ya compruebe que el diccionario está bien
 
-    print(pareja) #borrar cuando ya compruebe que el diccionario está bien
+    jugador.send('COMIENZA EL JUEGO DEL  A H O R C A D O')
+    #ahorcado(jugador, ipPuerto, palabracontraria(partida, jugadores, ipPuerto), pareja)
 
-
-    ahorcado(jugador, ipPuerto, palabracontraria(palabra,pareja), pareja)
-
+    time.sleep(100)
     jugador.close() #DEBERÉ CERRAR A AMBOS JUGADORES
     
 
@@ -221,13 +255,6 @@ if __name__ == '__main__':
             infoListenerApodoJugador = jugador.recv()
             jugadores[ipPuerto] = infoListenerApodoJugador
             
-            #saluda antes de pasar la conexión a un proceso
-            j = len(jugadores)
-            if j == 1:
-                jugador.send('Hola '+infoListenerApodoJugador[1]+' tu papel es de Jugador 1. \n Esperando al segundo jugador...')
-            if j == 2:
-                jugador.send('Hola '+infoListenerApodoJugador[1]+' tu papel es de Jugador 2. \n Ya tenemos dos jugadores, empieza la partida...')
-
             p = Process(target=serve_client, args=(jugador, ipPuerto, jugadores, cerrojo))
             p.start()
 

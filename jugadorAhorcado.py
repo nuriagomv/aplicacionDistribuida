@@ -1,12 +1,13 @@
-from multiprocessing.connection import Client, Listener
+from multiprocessing.connection import Client #, Listener
 from multiprocessing import Process, Manager
 import time
 
 
-local_listener = (('127.0.0.1', 5001), b'secret password CLIENT')
+#local_listener = (('127.0.0.1', 5001), b'secret password CLIENT')
 
 
 def enviarPalabraParaContrincante(longitud):
+    time.sleep(1)
     while True:
         palabra = input('Propón una palabra para tu contrincante de la longitud indicada: ')
         palabra.lower()
@@ -16,7 +17,6 @@ def enviarPalabraParaContrincante(longitud):
             print('Por favor, ingresa una PALABRA.')
         else:
             return palabra
-
 
 def obtenerIntento(letrasProbadas):
     while True:
@@ -33,20 +33,16 @@ def obtenerIntento(letrasProbadas):
             return intento
 
 
-
-def jugador_listener(avisos):
-    jugadorListener = Listener(address = local_listener[0], authkey = local_listener[1])
-    
-    while True:
-
-        servidor = jugadorListener.accept()
-        mensaje = servidor.recv()
-        print ('Mensaje del servidor recibido: ', mensaje)
-
-        if "Elige una palabra" in mensaje:
-            avisos['longitudDada'] = ["sí", int(mensaje[len(mensaje)-1])]
-
-
+#def jugador_listener(avisos):
+#    jugadorListener = Listener(address = local_listener[0], authkey = local_listener[1])
+#    while True:
+#        servidor = jugadorListener.accept()
+#        mensaje = servidor.recv()
+#        print ('Mensaje del servidor recibido: ', mensaje)
+#
+#        if "Elige una palabra" in mensaje:
+#            avisos['longitudDada'] = ["sí", int(mensaje[len(mensaje)-1])]
+#            print(avisos['longitudDada'])
 
 
 
@@ -56,40 +52,46 @@ if __name__ == '__main__':
     jugador = Client(address = ('127.0.0.1', 6000), authkey = b'secret password SERVER')
     print ('Conexión aceptada')
     apodo = input('Cuál es tu apodo como jugador? ')
-    jugador.send([local_listener, apodo])
+    jugador.send([apodo])
     print ('enviando la información de tu listener como jugador...')
 
-    saludo = jugador.recv()
-    print(saludo)
-
-    manager = Manager()
-    avisos = manager.dict()
-    avisos['longitudDada'] = ["no"]
-    avisos['juegoFinalizado'] = "no"
-    avisos['escucharOcontestar'] = "escuchar"
-
-    jugadorListener = Process(target=jugador_listener, args=(avisos,))
-    jugadorListener.start()
-
     while True:
-        if (avisos['longitudDada'][0] == "sí"):
-            palabraElegida = enviarPalabraParaContrincante( avisos['longitudDada'][1] )
+        mensaje = jugador.recv()
+        print('MANDADO DESDE SERVIDOR: ', mensaje)
+        if "Elige una palabra" in mensaje:
+            longitud =  int(mensaje[len(mensaje)-1])
+            palabraElegida = enviarPalabraParaContrincante(longitud)
             jugador.send(palabraElegida)
-            break
+            
     
-    letrasProbadas = []
-    while not (avisos['juegoFinalizado'] == "sí") :
-        intento =  obtenerIntento(letrasProbadas)
-        jugador.send(intento)
-        letrasProbadas.append(intento)
-        respuesta = jugador.recv()
-        print(respuesta)
-        if "HAS GANADO" in respuesta:
-            avisos['juegoFinalizado'] = "sí"
+   
+
+    #manager = Manager()
+    #avisos = manager.dict()
+    #avisos['longitudDada'] = ["no"]
+    #avisos['juegoFinalizado'] = "no"
+    #avisos['escucharOcontestar'] = "escuchar"
+
+    #jugadorListener = Process(target=jugador_listener, args=(avisos,))
+    #jugadorListener.start()
+
+    #while True:
+    #    if (avisos['longitudDada'][0] == "sí"):
+    #        palabraElegida = enviarPalabraParaContrincante( avisos['longitudDada'][1] )
+    #        jugador.send(palabraElegida)
+    #        break
+    
+    #letrasProbadas = []
+    #while not (avisos['juegoFinalizado'] == "sí") :
+    #    intento =  obtenerIntento(letrasProbadas)
+    #    jugador.send(intento)
+    #    letrasProbadas.append(intento)
+    #    respuesta = jugador.recv()
+    #    print(respuesta)
+    #    if "HAS GANADO" in respuesta:
+    #        avisos['juegoFinalizado'] = "sí"
 
 
-
-
-    jugador.close()
-    jugadorListener.terminate()
-    print("JUEGO FINALIZADO")
+    #jugador.close()
+    #jugadorListener.terminate()
+    #print("JUEGO FINALIZADO")
