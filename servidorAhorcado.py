@@ -143,20 +143,20 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
         #si ha acertado todas las letras es ganador
         if all([char in letrasCorrectas for char in palabra]):
             cerrojo.acquire()
-            jugadores[ipPuerto][4] = jugadores[ipPuerto][0:3]+['ganador']  #NO ME ACTUALIZA ESTO!!!!!!!!
+            jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['ganador']  #NO ME ACTUALIZA ESTO!!!!!!!!
             cerrojo.release()
             jugador.send("HAS GANADO, la palabra era "+palabra)
-            #jugador.close()
+            print(jugadores) #sobra
             break
         
         #si ha agotado todos sus intentos
         nIntentosFallidos = len(letrasIncorrectas)
         if nIntentosFallidos == nTotalIntentos:
             cerrojo.acquire()
-            jugadores[ipPuerto][4] = jugadores[ipPuerto][0:3]+['agotado intentos'] #NO ME ACTUALIZA ESTO!!!!!!!!
+            jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['agotado intentos'] #NO ME ACTUALIZA ESTO!!!!!!!!
             cerrojo.release()
             jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
-            print(jugadores)
+            print(jugadores) #sobra
             break
 
         jugador.send( '\n'+mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
@@ -237,7 +237,8 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
     jugador.close()
     cerrojo.acquire()
-    del jugadores[ipPuerto] # lo borro del diccionario
+    #del jugadores[ipPuerto] # lo borro del diccionario
+    # tengo que borrar a ambos a la vez pa q no se quede un proceso colgao
     cerrojo.release()
 
 
