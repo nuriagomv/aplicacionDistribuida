@@ -143,7 +143,7 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
         #si ha acertado todas las letras es ganador
         if all([char in letrasCorrectas for char in palabra]):
             cerrojo.acquire()
-            jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['ganador']  #NO ME ACTUALIZA ESTO!!!!!!!!
+            jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['ganador']
             cerrojo.release()
             jugador.send("HAS GANADO, la palabra era "+palabra)
             print(jugadores) #sobra
@@ -153,7 +153,7 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
         nIntentosFallidos = len(letrasIncorrectas)
         if nIntentosFallidos == nTotalIntentos:
             cerrojo.acquire()
-            jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['agotado intentos'] #NO ME ACTUALIZA ESTO!!!!!!!!
+            jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['agotado intentos']
             cerrojo.release()
             jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
             print(jugadores) #sobra
