@@ -116,22 +116,19 @@ def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSe
     for i in range(len(palabraSecreta)): # completar los espacios vacíos con las letras adivinadas
         if palabraSecreta[i] in letrasCorrectas:
             espaciosVacios = espaciosVacios[:i] + palabraSecreta[i] + espaciosVacios[i+1:]
-    envio = listaMonigotes[len(letrasIncorrectas)]+'\n'*2+'Letras incorrectas: '+str(letrasIncorrectas)+'\n'+'Lo que llevas de la palabra: '+str(espaciosVacios)+'\n'
+    envio = '\n'+listaMonigotes[len(letrasIncorrectas)]+'\n'*2+'Letras incorrectas: '+str(letrasIncorrectas)+'\n'+'Lo que llevas de la palabra: '+str(espaciosVacios)+'\n'
     return envio
 
-def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
+def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, pos):
     
     #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO
 
-    juegoContinua = True
+    #juegoContinua = True
     letrasCorrectas = []
     letrasIncorrectas = []
     nIntentosFallidos = 0
 
-    while juegoContinua:
-        print(jugadores)
-        #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando algun jugador gane
-        juegoContinua = not ( nIntentosFallidos==nTotalIntentos or any ([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
+    while True:
         
         letra = pedirPalabraOLetra(jugador)
         if letra in palabra:
@@ -155,21 +152,29 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
             cerrojo.release()
             jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
             break
-
-        jugador.send( '\n'+mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
         
+        #si el otro es ganador ya no puede seguir tampoco
+        if [ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ][pos%2]:
+            jugador.send("TU CONTRINCANTE HA GANADO")
+            break
+
+        jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
+        
+        #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando algun jugador gane
+        #juegoContinua = not ( nIntentosFallidos==nTotalIntentos or any ([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
+        #print(juegoContinua)
+        print(jugadores)
 
 def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
     #asigno una partida al jugador:
     pos, partida = decidirPartidaParaJugador(jugadores, ipPuerto)
     apodo = jugadores[ipPuerto][0]
-    print(pos, partida, apodo)
-
-	cerrojo.acquire()
-	jugadores[ipPuerto] = [partida] + jugadores[ipPuerto]
-	cerrojo.release()
     
+    cerrojo.acquire()
+    jugadores[ipPuerto] = [partida] + jugadores[ipPuerto]
+    cerrojo.release()
+
     saludar(apodo, pos, jugador)
 
     #espero a que haya dos jugadores asignados a la misma partida para empezar
@@ -211,12 +216,12 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                     cerrojo.release()
 
     jugador.send('COMIENZA EL JUEGO DEL  A H O R C A D O')
-    ahorcado(jugador, ipPuerto, palabracontraria(partida, jugadores, ipPuerto), jugadores, partida, cerrojo, pareja)
+    ahorcado(jugador, ipPuerto, palabracontraria(partida, jugadores, ipPuerto), jugadores, partida, cerrojo, pareja, pos)
 
     if jugadores[ipPuerto][4] == 'ganador':
         jugador.send("ENHORABUENA")
     if jugadores[ipPuerto][4] == 'sigue probando':
-        jugador.send("JUEGO FINALIZADO: TU CONTRINCANTE HA GANADO")
+        jugador.send("JUEGO FINALIZADO")
     if jugadores[ipPuerto][4] == 'agotado intentos': # mi contrincante tiene oportunidad de ganar todavia
         for (ip,_) in [list(jugadores.items())[i] for i in pareja]:
             if ip != ipPuerto:
@@ -233,6 +238,8 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                 jugador.send("espera a ver qué pasa con tu contrincante...")
                 time.sleep(2)
 
+    while True:
+        time.sleep(1) #para qe no se cierre ninguna conexión
     #jugador.close()
     #cerrojo.acquire()
     #del jugadores[ipPuerto] # lo borro del diccionario

@@ -54,20 +54,26 @@ if __name__ == '__main__':
     letrasProbadas = []
     continuar = True
     while continuar:
-        intento =  obtenerIntento(letrasProbadas)
-        jugador.send(intento)
-        letrasProbadas.append(intento)
-        respuesta = jugador.recv()
-        print(respuesta)
-        if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta):
+        try:
+            intento =  obtenerIntento(letrasProbadas)
+            jugador.send(intento)
+            letrasProbadas.append(intento)
+            respuesta = jugador.recv()
+            print(respuesta)
+        except:
+            print('El servidor ya no te manda más intentos. Veamos por qué puede ser')
+        if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta):
             continuar = False
     
     #respuesta final por parte del servidor
     while True:
-        fin = jugador.recv()
-        print(fin)
-        if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin):
-            break
+        try:
+            fin = jugador.recv()
+            print(fin)
+            if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin):
+                break
+        except:
+            print("puede que el fallo esté aquí")
 
     #jugador.close()
     print("FIN")
