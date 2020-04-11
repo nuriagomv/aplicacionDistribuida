@@ -69,5 +69,5 @@ if __name__ == '__main__':
         if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin):
             break
 
-    jugador.close()
+    #jugador.close()
     print("FIN")

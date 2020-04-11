@@ -146,7 +146,6 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
             jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['ganador']
             cerrojo.release()
             jugador.send("HAS GANADO, la palabra era "+palabra)
-            print(jugadores) #sobra
             break
         
         #si ha agotado todos sus intentos
@@ -156,7 +155,6 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
             jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['agotado intentos']
             cerrojo.release()
             jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
-            print(jugadores) #sobra
             break
 
         jugador.send( '\n'+mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
@@ -235,11 +233,11 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                 jugador.send("espera a ver qué pasa con tu contrincante...")
                 time.sleep(2)
 
-    jugador.close()
-    cerrojo.acquire()
+    #jugador.close()
+    #cerrojo.acquire()
     #del jugadores[ipPuerto] # lo borro del diccionario
     # tengo que borrar a ambos a la vez pa q no se quede un proceso colgao
-    cerrojo.release()
+    #cerrojo.release()
 
 
     #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS EN UN TOPIC DEL BROKER WILD.MAT.UCM.ES
