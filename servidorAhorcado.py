@@ -68,7 +68,6 @@ listaMonigotes = ['''
 nTotalIntentos = len(listaMonigotes) - 1
 
 
-
 def decidirPartidaParaJugador(jugadores, ipPuerto):
     claves = np.array( list(jugadores.keys()) )
     pos = list ( np.where(claves == ipPuerto)[0] )[0] + 1
@@ -121,38 +120,19 @@ def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSe
     envio = listaMonigotes[len(letrasIncorrectas)]+'\n'*2+'Letras incorrectas: '+str(letrasIncorrectas)+'\n'+'Lo que llevas de la palabra: '+str(espaciosVacios)+'\n'
     return envio
 
-
-#def localizarJugador(pareja, ipPuerto):
-#    i = -1
-#    for key in pareja.keys():
-#        i += 1
-#        if key == ipPuerto:
-#            break
-#    return i
-
-
-#def colocarPalabra(pareja, palabra, ipPuerto):
-#    i = localizarJugador(pareja, ipPuerto)
-#    pareja['palabras'] = [(1, 'default'), (2, 'default')]
-#    pareja['palabras'][i] = (i+1, palabra)
-#    print('El jugador ', i+1, ' propone la palabra: ', palabra)
-
-
-def ahorcado(jugador, ipPuerto, palabra, pareja):
+def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
     #ahora aqui ya debe empezar el bucle del ahorcado
     #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando el otro jugador gane
     #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO DE SERVER_CLIENT
-    jugador_info, _ = pareja[ipPuerto]
-    conn = Client(address=jugador_info[0], authkey=jugador_info[1])
-    
+
     juegoContinua = True
     letrasCorrectas = []
     letrasIncorrectas = []
     nIntentosFallidos = 0
-    
+
     while juegoContinua:
         juegoContinua = not ( nIntentosFallidos==nTotalIntentos or
-         any([x=='ganador' for (_,x) in pareja['haGanado']]) )
+                            any([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
         
         letra = pedirPalabraOLetra(jugador)
         if letra in palabra:
@@ -160,10 +140,11 @@ def ahorcado(jugador, ipPuerto, palabra, pareja):
         else:
             letrasIncorrectas.append(letra)
         
+        #si ha acertado todas las letras
         if all([char in letrasCorrectas for char in palabra]):
-            i = localizarJugador(pareja, ipPuerto)
-            pareja['haGanado'][i] = (i+1, 'ganador')
-            print('EL JUGADOR ', i+1, ' HA GANADO!!!')
+            cerrojo.acquire()
+            jugadores[ipPuerto][4] = 'ganador'
+            cerrojo.release()
             jugador.send("HAS GANADO, LA PALABRA ERA "+palabra)
             jugador.close()
             break
@@ -193,6 +174,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
         else:
             jugador.send('Ya sois dos jugadores AÑADIR COMO SE LLAMA EL COMPAÑERO, empieza la partida...')
             break
+    pareja = np.where( [lista[0]==partida for (_,lista) in jugadores.items()] )[0]
     
     establecerLongitudPalabra(partida, jugadores, cerrojo)
 
@@ -205,23 +187,25 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     cerrojo.release()
 
     #bucle que no permita continuar hasta que los 2 jugadores tienen la palabra colocada
-    nJugadoresConPalabraColocada = 0
-    while nJugadoresConPalabraColocada != 2:
-        for (_,lista) in jugadores.items():
+    while True:
+        nJugadoresConPalabraColocada = sum( [len(lista)>=4 for (_,lista) in [list(jugadores.items())[i] for i in pareja]] )
+        if nJugadoresConPalabraColocada == 2:
+            break
+        else:
+            jugador.send("Espera porque tu compi todavía no ha elegido la palabra para ti...")
+            time.sleep(2)
+
+    #establezco estado de SIGUE PROBANDO para cada jugador de la partida en su lista
+    #este estado pasará a ser GANADOR si gana o AGOTADO INTENTOS si se ahorca
+    for (ip, lista) in jugadores.items():
             if lista[0] == partida:
-                if len(lista) == 4:
-                    nJugadoresConPalabraColocada += 1
-                else:
-                    jugador.send("Espera porque tu compi todavía no ha elegido la palabra para ti...")
-                    time.sleep(3)
-    
-    
-    #colocarPalabra(pareja, palabra, ipPuerto)
-    #pareja['haGanado'] = [(1,'no'), (2,'no')]
-    print(jugadores) #borrar cuando ya compruebe que el diccionario está bien
+                if len(lista) < 5:
+                    cerrojo.acquire()
+                    jugadores[ip] = jugadores[ip] + ['sigue probando']
+                    cerrojo.release()
 
     jugador.send('COMIENZA EL JUEGO DEL  A H O R C A D O')
-    #ahorcado(jugador, ipPuerto, palabracontraria(partida, jugadores, ipPuerto), pareja)
+    ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja)
 
     time.sleep(100)
     jugador.close() #DEBERÉ CERRAR A AMBOS JUGADORES
@@ -232,10 +216,6 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS
         
     
-
-
-
-
 if __name__ == '__main__':
 
     servidor = Listener(address=('127.0.0.1', 6000), authkey=b'secret password SERVER')

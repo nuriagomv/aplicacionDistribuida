@@ -1,9 +1,6 @@
-from multiprocessing.connection import Client #, Listener
+from multiprocessing.connection import Client
 from multiprocessing import Process, Manager
 import time
-
-
-#local_listener = (('127.0.0.1', 5001), b'secret password CLIENT')
 
 
 def enviarPalabraParaContrincante(longitud):
@@ -33,18 +30,6 @@ def obtenerIntento(letrasProbadas):
             return intento
 
 
-#def jugador_listener(avisos):
-#    jugadorListener = Listener(address = local_listener[0], authkey = local_listener[1])
-#    while True:
-#        servidor = jugadorListener.accept()
-#        mensaje = servidor.recv()
-#        print ('Mensaje del servidor recibido: ', mensaje)
-#
-#        if "Elige una palabra" in mensaje:
-#            avisos['longitudDada'] = ["sí", int(mensaje[len(mensaje)-1])]
-#            print(avisos['longitudDada'])
-
-
 
 if __name__ == '__main__':
 
@@ -62,36 +47,21 @@ if __name__ == '__main__':
             longitud =  int(mensaje[len(mensaje)-1])
             palabraElegida = enviarPalabraParaContrincante(longitud)
             jugador.send(palabraElegida)
-            
-    
-   
+        if "COMIENZA EL JUEGO" in mensaje:
+            break
 
-    #manager = Manager()
-    #avisos = manager.dict()
-    #avisos['longitudDada'] = ["no"]
-    #avisos['juegoFinalizado'] = "no"
-    #avisos['escucharOcontestar'] = "escuchar"
-
-    #jugadorListener = Process(target=jugador_listener, args=(avisos,))
-    #jugadorListener.start()
-
-    #while True:
-    #    if (avisos['longitudDada'][0] == "sí"):
-    #        palabraElegida = enviarPalabraParaContrincante( avisos['longitudDada'][1] )
-    #        jugador.send(palabraElegida)
-    #        break
-    
-    #letrasProbadas = []
-    #while not (avisos['juegoFinalizado'] == "sí") :
-    #    intento =  obtenerIntento(letrasProbadas)
-    #    jugador.send(intento)
-    #    letrasProbadas.append(intento)
-    #    respuesta = jugador.recv()
-    #    print(respuesta)
-    #    if "HAS GANADO" in respuesta:
-    #        avisos['juegoFinalizado'] = "sí"
+    #bucle para jugar al ahorcado
+    letrasProbadas = []
+    continuar = True
+    while continuar:
+        intento =  obtenerIntento(letrasProbadas)
+        jugador.send(intento)
+        letrasProbadas.append(intento)
+        respuesta = jugador.recv()
+        print(respuesta)
+        if "HAS GANADO" in respuesta:
+            continuar = False
 
 
-    #jugador.close()
-    #jugadorListener.terminate()
-    #print("JUEGO FINALIZADO")
+    jugador.close()
+    print("JUEGO FINALIZADO")
