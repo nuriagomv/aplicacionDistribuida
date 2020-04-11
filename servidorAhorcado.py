@@ -69,8 +69,7 @@ nTotalIntentos = len(listaMonigotes) - 1
 
 
 def decidirPartidaParaJugador(jugadores, ipPuerto):
-    claves = np.array( list(jugadores.keys()) )
-    pos = list ( np.where(claves == ipPuerto)[0] )[0] + 1
+    pos = np.where( [ c==ipPuerto for (c,_) in np.array( list(jugadores.items()) )] )[0][0] + 1
     if pos % 2 == 0: # la posición es par
         partida = pos/2
     else: # la posición es impar
@@ -130,9 +129,9 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja):
     nIntentosFallidos = 0
 
     while juegoContinua:
+        print(jugadores)
         #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando algun jugador gane
-        juegoContinua = not ( nIntentosFallidos==nTotalIntentos or
-                            any([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
+        juegoContinua = not ( nIntentosFallidos==nTotalIntentos or any ([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
         
         letra = pedirPalabraOLetra(jugador)
         if letra in palabra:
@@ -165,10 +164,11 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     #asigno una partida al jugador:
     pos, partida = decidirPartidaParaJugador(jugadores, ipPuerto)
     apodo = jugadores[ipPuerto][0]
-    
-    cerrojo.acquire()
-    jugadores[ipPuerto] = [partida] + jugadores[ipPuerto]
-    cerrojo.release()
+    print(pos, partida, apodo)
+
+	cerrojo.acquire()
+	jugadores[ipPuerto] = [partida] + jugadores[ipPuerto]
+	cerrojo.release()
     
     saludar(apodo, pos, jugador)
 
