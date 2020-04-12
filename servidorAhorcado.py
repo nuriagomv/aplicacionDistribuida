@@ -28,9 +28,10 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
             jugador.send('Esperando al segundo jugador...')
             time.sleep(3)
         else:
-            jugador.send('Ya sois dos jugadores AÑADIR COMO SE LLAMA EL COMPAÑERO, empieza la partida...')
+            pareja = np.where( [lista[0]==partida for (_,lista) in jugadores.items()] )[0]
+            apodoContrincante = [ lista[1] for (_,lista) in [list(jugadores.items())[i] for i in pareja] ][pos%2]
+            jugador.send('Ya sois dos jugadores. Juegas contra '+ apodoContrincante+', empieza la partida...')
             break
-    pareja = np.where( [lista[0]==partida for (_,lista) in jugadores.items()] )[0]
     
     aux.establecerLongitudPalabra(partida, jugadores, cerrojo)
 
