@@ -130,7 +130,10 @@ def establecerLongitudPalabra(partida, jugadores, cerrojo):
 def notificar_inicio_juego(jugador, ipPuerto, jugadores):
     lonPalabra = jugadores[ipPuerto][2]  
     print ("Mandando longitud de palabra a ", jugadores[ipPuerto][1], ' que está en ', ipPuerto)
-    jugador.send("Elige una palabra de longitud "+str(lonPalabra))
+    try:
+        jugador.send("Elige una palabra de longitud "+str(lonPalabra))
+    except IOError:
+        print ('No enviado, conexión abruptamente cerrada por el jugador')
 
 
 def pedirPalabraOLetra(jugador): 
@@ -184,7 +187,10 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
 
             # POR AQUI MAS O MENOS SE DEBERIA INTRODUCIR LA REGION CRITICA
             
-            jugador.send("HAS GANADO, la palabra era "+palabra)
+            try:
+                jugador.send("HAS GANADO, la palabra era "+palabra)
+            except IOError:
+                print ('No enviado, conexión abruptamente cerrada por el jugador')
             break
         
         #CASO 2: si ha agotado todos sus intentos
@@ -193,14 +199,23 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
             cerrojo.acquire()
             jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['agotado intentos']
             cerrojo.release()
-            jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
+            try:
+                jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
+            except IOError:
+                print ('No enviado, conexión abruptamente cerrada por el jugador')
             break
         
         #CASO 3: si el otro es ganador ya no puede seguir tampoco
         if [ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ][pos%2]:
-            jugador.send("TU CONTRINCANTE HA GANADO")
+            try:
+                jugador.send("TU CONTRINCANTE HA GANADO")
+            except IOError:
+                print ('No enviado, conexión abruptamente cerrada por el jugador')
             break
         
         #si ninguno de esos casos se ha dado, es que el juego continua para mí
-        jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
+        try:
+            jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
+        except IOError:
+            print ('No enviado, conexión abruptamente cerrada por el jugador')
 
