@@ -119,6 +119,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     jugador.close()
 
 
+
     #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS EN UN TOPIC DEL BROKER WILD.MAT.UCM.ES
         
 
