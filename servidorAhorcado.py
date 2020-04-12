@@ -3,69 +3,7 @@ from multiprocessing import Process, Lock, Manager
 import random
 import time
 import numpy as np
-
-
-
-listaMonigotes = ['''
-    ''', '''
- 
-   +---+
-   |   |
-       |
-       |
-       |
-       |
- =========''', '''
- 
-   +---+
-   |   |
-   O   |
-       |
-       |
-       |
- =========''', '''
- 
-   +---+
-   |   |
-   O   |
-   |   |
-       |
-       |
- =========''', '''
- 
-   +---+
-   |   |
-   O   |
-  /|   |
-       |
-       |
- =========''', '''
- 
-   +---+
-   |   |
-   O   |
-  /|\  |
-       |
-       |
- =========''', '''
- 
-   +---+
-   |   |
-   O   |
-  /|\  |
-  /    |
-       |
- =========''', '''
- 
-   +---+
-   |   |
-   O   |
-  /|\  |
-  / \  |
-       |
- =========''']
-
-nTotalIntentos = len(listaMonigotes) - 1
+import auxiliaresJuego as aux
 
 
 def decidirPartidaParaJugador(jugadores, ipPuerto):
@@ -121,7 +59,8 @@ def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSe
 
 def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, pos):
     
-    #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO
+    listaMonigotes = aux.monigotes()
+    nTotalIntentos = len(listaMonigotes) - 1
 
     letrasCorrectas = []
     letrasIncorrectas = []
