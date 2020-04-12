@@ -128,8 +128,7 @@ def establecerLongitudPalabra(partida, jugadores, cerrojo):
 
 
 def notificar_inicio_juego(jugador, ipPuerto, jugadores):
-    lonPalabra = jugadores[ipPuerto][2]  
-    print ("Mandando longitud de palabra a ", jugadores[ipPuerto][1], ' que está en ', ipPuerto)
+    lonPalabra = jugadores[ipPuerto][2]
     try:
         jugador.send("Elige una palabra de longitud "+str(lonPalabra))
     except IOError:
@@ -218,4 +217,12 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
             jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
         except IOError:
             print ('No enviado, conexión abruptamente cerrada por el jugador')
+
+
+
+def borrarParejaDict(pareja, jugadores, ipPuerto):
+    if ipPuerto in [ip for (ip,_) in list(jugadores.items())]: #si no he borrado todavía a la pareja, mi ip sigue estando en el diccionario
+        ipsPareja = [ ip for (ip,_) in [list(jugadores.items())[i] for i in pareja] ]
+        for ip in ipsPareja:
+            del jugadores[ip] # lo borro del diccionario
 

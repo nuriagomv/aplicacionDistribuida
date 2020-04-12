@@ -31,13 +31,13 @@ if __name__ == '__main__':
     letrasProbadas = []
     continuar = True
     while continuar:
+        intento =  aux.obtenerIntento(letrasProbadas)
+        jugador.send(intento)
+        letrasProbadas.append(intento)
         try:
-            intento =  aux.obtenerIntento(letrasProbadas)
-            jugador.send(intento)
-            letrasProbadas.append(intento)
             respuesta = jugador.recv()
             print(respuesta)
-        except:
+        except EOFError:
             print('parece que ha habido algun error')
         if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta): #en caso contrario, es que me ha mandado el monigote y no un mensaje
             continuar = False
@@ -47,10 +47,10 @@ if __name__ == '__main__':
         try:
             fin = jugador.recv()
             print(fin)
-        except:
+        except EOFError:
             print("parece que algo está fallando")
         if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin): #en caso contrario, es que mi contrincante sigue jugando
             break
-
-    #jugador.close()
+    
     print("FIN")
+    jugador.close()

@@ -110,13 +110,13 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                     print ('No enviado, conexión abruptamente cerrada por el jugador')
                 time.sleep(2)
 
-    while True:
-        time.sleep(1) #para qe no se cierre ninguna conexión
-    #jugador.close()
-    #cerrojo.acquire()
-    #del jugadores[ipPuerto] # lo borro del diccionario
-    # tengo que borrar a ambos a la vez pa q no se quede un proceso colgao
-    #cerrojo.release()
+    #antes de ejecutar esto me tengo que asegurar que ambos han terminado porque sino da fallo
+    time.sleep(10) #FULLERÍA
+    cerrojo.acquire()
+    aux.borrarParejaDict(pareja, jugadores, ipPuerto)
+    cerrojo.release()
+    
+    jugador.close()
 
 
     #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS EN UN TOPIC DEL BROKER WILD.MAT.UCM.ES
