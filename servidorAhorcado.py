@@ -1,4 +1,4 @@
-from multiprocessing.connection import Listener, AuthenticationError #, Client
+from multiprocessing.connection import Listener, AuthenticationError
 from multiprocessing import Process, Lock, Manager
 import random
 import time
@@ -86,13 +86,13 @@ def establecerLongitudPalabra(partida, jugadores, cerrojo):
     lonPalabra = random.randint(4,6)
     for (ip, lista) in jugadores.items():
             if lista[0] == partida:
-                if len(lista) < 3:
+                if len(lista) < 3: 
                     cerrojo.acquire()
-                    jugadores[ip] = jugadores[ip] + [lonPalabra]
+                    jugadores[ip] = jugadores[ip] + [lonPalabra]  
                     cerrojo.release()
 
 def notificar_inicio_juego(jugador, ipPuerto, jugadores):
-    lonPalabra = jugadores[ipPuerto][2]
+    lonPalabra = jugadores[ipPuerto][2]  
     print ("Mandando longitud de palabra a ", jugadores[ipPuerto][1], ' que está en ', ipPuerto)
     jugador.send("Elige una palabra de longitud "+str(lonPalabra))
 
@@ -106,8 +106,8 @@ def pedirPalabraOLetra(jugador):
 def palabracontraria(partida, jugadores, ipPuerto):
     for (ip, lista) in jugadores.items():
             if lista[0] == partida:
-                if ip != ipPuerto:
-                    palabraContr = lista[3]
+                if ip != ipPuerto: #si es mi contrincante y no yo
+                    palabraContr = lista[3]  
                     break
     return palabraContr
 
@@ -123,7 +123,6 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
     
     #LISTA MONIGOTES Y NTOTALINTENTOS DEBERIA METERLOS DENTRO
 
-    #juegoContinua = True
     letrasCorrectas = []
     letrasIncorrectas = []
     nIntentosFallidos = 0
@@ -136,15 +135,18 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
         else:
             letrasIncorrectas.append(letra)
         
-        #si ha acertado todas las letras es ganador
+        #CASO 1: si ha acertado todas las letras es ganador
         if all([char in letrasCorrectas for char in palabra]):
             cerrojo.acquire()
             jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['ganador']
             cerrojo.release()
+
+            # POR AQUI MAS O MENOS SE DEBERIA INTRODUCIR LA REGION CRITICA
+            
             jugador.send("HAS GANADO, la palabra era "+palabra)
             break
         
-        #si ha agotado todos sus intentos
+        #CASO 2: si ha agotado todos sus intentos
         nIntentosFallidos = len(letrasIncorrectas)
         if nIntentosFallidos == nTotalIntentos:
             cerrojo.acquire()
@@ -153,26 +155,22 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
             jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
             break
         
-        #si el otro es ganador ya no puede seguir tampoco
+        #CASO 3: si el otro es ganador ya no puede seguir tampoco
         if [ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ][pos%2]:
             jugador.send("TU CONTRINCANTE HA GANADO")
             break
-
-        jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
         
-        #el bucle (juego) terminará cuando el nIntentos==nTotalIntentos o cuando algun jugador gane
-        #juegoContinua = not ( nIntentosFallidos==nTotalIntentos or any ([ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ]) )
-        #print(juegoContinua)
-        print(jugadores)
+        #si ninguno de esos casos se ha dado, es que el juego continua para mí
+        jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
 
 def serve_client(jugador, ipPuerto, jugadores, cerrojo):
 
     #asigno una partida al jugador:
     pos, partida = decidirPartidaParaJugador(jugadores, ipPuerto)
-    apodo = jugadores[ipPuerto][0]
+    apodo = jugadores[ipPuerto][0] 
     
     cerrojo.acquire()
-    jugadores[ipPuerto] = [partida] + jugadores[ipPuerto]
+    jugadores[ipPuerto] = [partida] + jugadores[ipPuerto] 
     cerrojo.release()
 
     saludar(apodo, pos, jugador)
@@ -192,9 +190,9 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     notificar_inicio_juego(jugador, ipPuerto, jugadores)
     
     #añado la palabra a la lista del jugador en el diccionario
-    palabra = pedirPalabraOLetra(jugador)
+    palabra = pedirPalabraOLetra(jugador)     
     cerrojo.acquire()
-    jugadores[ipPuerto] = jugadores[ipPuerto] + [palabra]
+    jugadores[ipPuerto] = jugadores[ipPuerto] + [palabra]    
     cerrojo.release()
 
     #bucle que no permita continuar hasta que los 2 jugadores tienen la palabra colocada
@@ -212,7 +210,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
             if lista[0] == partida:
                 if len(lista) < 5:
                     cerrojo.acquire()
-                    jugadores[ip] = jugadores[ip] + ['sigue probando']
+                    jugadores[ip] = jugadores[ip] + ['sigue probando']  
                     cerrojo.release()
 
     jugador.send('COMIENZA EL JUEGO DEL  A H O R C A D O')
@@ -223,8 +221,9 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
     if jugadores[ipPuerto][4] == 'sigue probando':
         jugador.send("JUEGO FINALIZADO")
     if jugadores[ipPuerto][4] == 'agotado intentos': # mi contrincante tiene oportunidad de ganar todavia
+        #establezco la ip de mi contrincante:
         for (ip,_) in [list(jugadores.items())[i] for i in pareja]:
-            if ip != ipPuerto:
+            if ip != ipPuerto: #la ip es la de mi contrincante, no la mía
                 contrincante = ip
                 break
         while True:
@@ -234,7 +233,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
             elif jugadores[contrincante][4] == 'agotado intentos':
                 jugador.send("FINALMENTE NINGUNO DE LOS DOS HABEIS GANADO LA PARTIDA")
                 break
-            else:
+            else: #mi contrincante sigue con el estado 'sigue probando'
                 jugador.send("espera a ver qué pasa con tu contrincante...")
                 time.sleep(2)
 
@@ -266,8 +265,8 @@ if __name__ == '__main__':
             ipPuerto = servidor.last_accepted                
             print ('Jugador aceptado desde la IP y puerto siguientes: ', ipPuerto)
             
-            infoListenerApodoJugador = jugador.recv()
-            jugadores[ipPuerto] = infoListenerApodoJugador
+            infoApodoJugador = jugador.recv()
+            jugadores[ipPuerto] = infoApodoJugador
             
             p = Process(target=serve_client, args=(jugador, ipPuerto, jugadores, cerrojo))
             p.start()
