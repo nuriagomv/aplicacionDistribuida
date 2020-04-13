@@ -110,18 +110,17 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo):
                     print ('No enviado, conexión abruptamente cerrada por el jugador')
                 time.sleep(2)
 
+    jugador.close()
+
+    Process(target = aux.publicarResultados, args = ( jugadores[ipPuerto],)).start()
+
     #antes de ejecutar esto me tengo que asegurar que ambos han terminado porque sino da fallo
     time.sleep(10) #FULLERÍA
+
     cerrojo.acquire()
     aux.borrarParejaDict(pareja, jugadores, ipPuerto)
     cerrojo.release()
-    
-    jugador.close()
 
-
-
-    #Y YA AL FINAL DEL TODISIMO SE PUBLICARIAN LOS RESULTADOS EN UN TOPIC DEL BROKER WILD.MAT.UCM.ES
-        
 
     
 if __name__ == '__main__':

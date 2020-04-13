@@ -3,6 +3,7 @@
 import time
 import numpy as np
 import random
+from paho.mqtt.client import Client
 
 
 def monigotes():
@@ -226,3 +227,20 @@ def borrarParejaDict(pareja, jugadores, ipPuerto):
         for ip in ipsPareja:
             del jugadores[ip] # lo borro del diccionario
 
+
+def on_publish(client, userdata, mid):
+    print("Resultado publicado.\n")
+
+
+def publicarResultados(lista):
+    
+    cliente = Client()
+    cliente.connect("wild.mat.ucm.es")
+    cliente.on_publish = on_publish
+
+    topic = 'clients/resultadosAhorcado'
+    mensaje = "RESULTADO EN LA PARTIDA "+str(lista[0])+" para el jugador con apodo "+lista[1]+": "+" Propuso la palabra "+lista[3]+" y finaliza el juego con el estado "+lista[4]+"."
+    
+    print ('Mensaje  a publicar en ', topic, ': ', mensaje)
+    cliente.publish(topic,mensaje)
+    
