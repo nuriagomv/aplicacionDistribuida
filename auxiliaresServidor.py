@@ -113,9 +113,14 @@ def decidirPartidaParaJugador(jugadores, ipPuerto):
 
 def saludar(apodo, pos, jugador):
     if pos % 2 != 0:
-        jugador.send('Hola '+apodo+' tu papel es de Jugador 1.')
+        mensaje = 'Hola '+apodo+' tu papel es de Jugador 1.'
     else:
-        jugador.send('Hola '+apodo+' tu papel es de Jugador 2.')
+        mensaje = 'Hola '+apodo+' tu papel es de Jugador 2.'
+
+    try:
+        jugador.send(mensaje)
+    except IOError:
+        print ('No enviado, conexión abruptamente cerrada por el jugador')
 
 
 def establecerLongitudPalabra(partida, jugadores, cerrojo):
@@ -128,21 +133,23 @@ def establecerLongitudPalabra(partida, jugadores, cerrojo):
                     cerrojo.release()
 
 
-def notificar_inicio_juego(jugador, ipPuerto, jugadores):
+def notificar_inicio_juego(jugador, ipPuerto, jugadores, juegoActivo):
     lonPalabra = jugadores[ipPuerto][2]
     try:
         jugador.send("Elige una palabra de longitud "+str(lonPalabra))
     except IOError:
         print ('No enviado, conexión abruptamente cerrada por el jugador')
+        juegoActivo.value = False
 
 
-def pedirPalabraOLetra(jugador): 
+def pedirPalabraOLetra(jugador, juegoActivo): 
     try:
         m = jugador.recv()
-    except EOFError:
-        print('algo no ha funcionado')
-    return m
-
+        return m
+    except Exception:
+        print('El jugador se ha ido')
+        juegoActivo.value = False
+    
 
 def palabracontraria(partida, jugadores, ipPuerto):
     for (ip, lista) in jugadores.items():
@@ -162,7 +169,7 @@ def mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabraSe
     return envio
 
 
-def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, pos):
+def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, pos, juegoActivo):
     
     listaMonigotes = monigotes()
     nTotalIntentos = len(listaMonigotes) - 1
@@ -171,13 +178,19 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
     letrasIncorrectas = []
     nIntentosFallidos = 0
 
-    while True:
+    while juegoActivo.value:
         
-        letra = pedirPalabraOLetra(jugador)
-        if letra in palabra:
-            letrasCorrectas.append(letra)
+        letra = pedirPalabraOLetra(jugador, juegoActivo)
+        #si no he recibido la letra bien, juegoActivo cambia a False
+        if juegoActivo.value: #si la he recibido bien, la coloco
+            if letra in palabra:
+                letrasCorrectas.append(letra)
+            else:
+                letrasIncorrectas.append(letra)
         else:
-            letrasIncorrectas.append(letra)
+            print("PARTIDA FINALIZADA POR HUÍDA DE UN JUGADOR")
+            break
+
         
         #CASO 1: si ha acertado todas las letras es ganador
         if all([char in letrasCorrectas for char in palabra]):
@@ -191,6 +204,7 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
                 jugador.send("HAS GANADO, la palabra era "+palabra)
             except IOError:
                 print ('No enviado, conexión abruptamente cerrada por el jugador')
+                juegoActivo.value = False
             break
         
         #CASO 2: si ha agotado todos sus intentos
@@ -203,6 +217,7 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
                 jugador.send("HAS AGOTADO TODOS TUS INTENTOS, la palabra era "+palabra)
             except IOError:
                 print ('No enviado, conexión abruptamente cerrada por el jugador')
+                juegoActivo.value = False
             break
         
         #CASO 3: si el otro es ganador ya no puede seguir tampoco
@@ -211,6 +226,7 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
                 jugador.send("TU CONTRINCANTE HA GANADO")
             except IOError:
                 print ('No enviado, conexión abruptamente cerrada por el jugador')
+                juegoActivo.value = False
             break
         
         #si ninguno de esos casos se ha dado, es que el juego continua para mí
@@ -218,14 +234,13 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
             jugador.send( mostrarTablero(listaMonigotes, letrasIncorrectas, letrasCorrectas, palabra) )
         except IOError:
             print ('No enviado, conexión abruptamente cerrada por el jugador')
+            juegoActivo.value = False
 
 
-
-def borrarParejaDict(pareja, jugadores, ipPuerto):
-    if ipPuerto in [ip for (ip,_) in list(jugadores.items())]: #si no he borrado todavía a la pareja, mi ip sigue estando en el diccionario
-        ipsPareja = [ ip for (ip,_) in [list(jugadores.items())[i] for i in pareja] ]
-        for ip in ipsPareja:
-            del jugadores[ip] # lo borro del diccionario
+def borrarParejaDict(pareja, jugadores):
+    ipsPareja = [ ip for (ip,_) in [list(jugadores.items())[i] for i in pareja] ]
+    for ip in ipsPareja:
+        del jugadores[ip] # lo borro del diccionario
 
 
 def on_publish(client, userdata, mid):

@@ -30,6 +30,7 @@ if __name__ == '__main__':
     #bucle para jugar al ahorcado
     letrasProbadas = []
     continuar = True
+    pasoSiguiente = True
     while continuar:
         intento =  aux.obtenerIntento(letrasProbadas)
         jugador.send(intento)
@@ -41,9 +42,12 @@ if __name__ == '__main__':
             print('parece que ha habido algun error')
         if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta): #en caso contrario, es que me ha mandado el monigote y no un mensaje
             continuar = False
+        if ("SENTIMOS COMUNICAR" in respuesta):
+            continuar = False
+            pasoSiguiente = False
     
     #respuesta final por parte del servidor
-    while True:
+    while pasoSiguiente:
         try:
             fin = jugador.recv()
             print(fin)
