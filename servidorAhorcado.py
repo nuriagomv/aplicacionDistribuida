@@ -176,11 +176,16 @@ if __name__ == '__main__':
     jugadores = manager.dict()
     cerrojo = Lock()
 
+    juegosActivos = []
+    contadoresFinalizados = []
+    var = -1
+
     while True:
+        var += 1
         print("Configurando una nueva partida...")
 
-        juegoActivo = manager.Value("c_bool", True)
-        jugadoresFinalizados = manager.Value("i",0)
+        juegosActivos.append( manager.Value("c_bool", True) )
+        contadoresFinalizados.append( manager.Value("i",0) )
         #print(juegoActivo.value)
         for _ in range(2):
             print ('Aceptando jugadores...')
@@ -195,7 +200,7 @@ if __name__ == '__main__':
                 except EOFError:
                     print('No recibido, conexión abruptamente cerrada por el jugador')
                 
-                p = Process(target=serve_client, args=(jugador, ipPuerto, jugadores, cerrojo, juegoActivo, jugadoresFinalizados))
+                p = Process(target=serve_client, args=(jugador, ipPuerto, jugadores, cerrojo, juegosActivos[var], contadoresFinalizados[var]))
                 p.start()
 
             except AuthenticationError:
