@@ -8,101 +8,73 @@ los diversos mensajes enviados y recibidos entre el servidor y los clientes.
 Una partida terminará cuando ambos hayan agotado sus intentos o uno de los dos haya encontrado
 la palabra antes que el otro. También se recogen algunos posibles errores que puedan darse con
 la conexión.
-Para hacer un código más corto, hemos importado varias funciones de distintos archivos que 
-permiten que todo se resuelva sin problemas.
-
 """
 
+# importación de las librerías necesarias
 from multiprocessing.connection import Client
 import time
 import auxiliaresJugador as aux
 
+
+
 if __name__ == '__main__':
 
-    print ('intentando conectar con en el servidor para jugar al ahorcado...')
-
+    print ('Intentando conectar con en el servidor para jugar al ahorcado...')
     jugador = Client(address = ('127.0.0.1', 6000), authkey = b'secret password SERVER')
-
     print ('Conexión aceptada')
-
     apodo = input('Cuál es tu apodo como jugador? ')
-
-    jugador.send([apodo])
-
-    print ('enviando la información de tu listener como jugador...')
+    jugador.send(apodo)
+    print ('Enviando tu información como jugador...')
 
     while True:
 
         mensaje = jugador.recv()
-
         print('MANDADO DESDE SERVIDOR: ', mensaje)
 
         if "Elige una palabra" in mensaje:
-
-            longitud =  int( mensaje[len(mensaje)-1] ) #el último elemento del mensaje
-
+            longitud =  int( mensaje[len(mensaje)-1] ) # es el último elemento del mensaje
             palabraElegida = aux.enviarPalabraParaContrincante(longitud)
-
             jugador.send(palabraElegida)
 
         if "COMIENZA EL JUEGO" in mensaje:
-
             break #me salgo de este primer bucle cuando puedo comenzar el juego
 
-    #bucle para jugar al ahorcado
-
     letrasProbadas = []
-
     continuar = True
-
     pasoSiguiente = True
 
+    # bucle para jugar al ahorcado
     while continuar:
 
         intento =  aux.obtenerIntento(letrasProbadas)
-
         jugador.send(intento)
-
         letrasProbadas.append(intento)
-
         try:
-
             respuesta = jugador.recv()
-
             print(respuesta)
-
         except EOFError:
-
             print('parece que ha habido algun error')
-
-        if ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta): #en caso contrario, es que me ha mandado el monigote y no un mensaje
-
+        
+        # si es el ultimo mensaje por parte del juego ahorcado me salgo del bucle
+        if ("VAYA" in respuesta) or ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta):
             continuar = False
 
+        # si recibo este mensaje es que mi contrincante se ha ido
         if ("SENTIMOS COMUNICAR" in respuesta):
-
             continuar = False
-
             pasoSiguiente = False
 
-    #respuesta final por parte del servidor
-
+    # respuesta final por parte del servidor
+    # estaré recibiendo respuestas hasta que mi contrincante termine de jugar
     while pasoSiguiente:
-
         try:
-
             fin = jugador.recv()
-
             print(fin)
-
         except EOFError:
-
             print("parece que algo está fallando")
-
-        if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin): #en caso contrario, es que mi contrincante sigue jugando
-            
+        if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin):
             break
 
     print("FIN")
-
     jugador.close()
+    
