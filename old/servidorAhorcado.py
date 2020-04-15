@@ -210,7 +210,7 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo, juegoActivo, jugadoresFi
 
                     juegoActivo.value = False
 
-        if jugadores[ipPuerto][4] == 'perdedor':
+        if jugadores[ipPuerto][4] == 'sigue probando':
 
             try:
 

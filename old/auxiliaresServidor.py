@@ -5,7 +5,7 @@
 import time
 import numpy as np
 import random
-from paho.mqtt.client import Client
+#from paho.mqtt.client import Client
 
 def monigotes():
 
@@ -390,38 +390,19 @@ def ahorcado(jugador, ipPuerto, palabra, jugadores, partida, cerrojo, pareja, po
 
         #CASO 1: si el otro es ganador ya no puede seguir tampoco
 
-        if [ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ][pos%2]:
-            #jugadores[ipPuerto] soy yo, entonces la segunda condición es siempre falsa. Si no se pone hay dos ganadores.
+        if [ lista[4]=='ganador' for (_,lista) in [list(jugadores.items())[i] for i in pareja] ][pos%2] or jugadores[ipPuerto] == jugadores[ipPuerto][0:4]+['ganador']:
 
-            if all([char in letrasCorrectas for char in palabra]):
-                
-                try:
+            try:
 
-                    jugador.send("¡VAYA! La palabra era "+palabra+",pero tu contrincante ha sido más rápido.")
-                    
-                    jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['perdedor']
+                jugador.send("TU CONTRINCANTE HA GANADO")
 
-                except IOError:
+            except IOError:
 
-                    print ('No enviado, conexión abruptamente cerrada por el jugador')
+                print ('No enviado, conexión abruptamente cerrada por el jugador')
 
-                    juegoActivo.value = False
-                    
-                break
-            else:
-                try:
-                    
-                    jugador.send("TU CONTRINCANTE HA GANADO")
-                    
-                    jugadores[ipPuerto] = jugadores[ipPuerto][0:4]+['perdedor']
-                    
-                except IOError:
-                    
-                    print ('No enviado, conexión abruptamente cerrada por el jugador')
-                
-                    juegoActivo.value = False
-                    
-                break
+                juegoActivo.value = False
+
+            break
 
         #CASO 2: si ha acertado todas las letras es ganador
 

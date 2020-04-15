@@ -100,7 +100,7 @@ if __name__ == '__main__':
             print("parece que algo está fallando")
 
         if ("ENHORABUENA" in fin) or ("JUEGO FINALIZADO" in fin) or ("FINALMENTE" in fin): #en caso contrario, es que mi contrincante sigue jugando
-            
+
             break
 
     print("FIN")
