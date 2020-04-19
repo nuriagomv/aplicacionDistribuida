@@ -193,8 +193,10 @@ def serve_client(jugador, ipPuerto, jugadores, cerrojo, juegoActivo, jugadoresFi
     jugador.close()
     jugadoresFinalizados.value += 1
     
-    # se publica el resultado para el jugador en concreto
-    Process(target = aux.publicarResultados, args = ( jugadores[ipPuerto].copy(), juegoActivo)).start()
+    # se publica el resultado para el jugador en concreto si la partida ha finalizado correctamente
+    if juegoActivo.value:
+        datos = jugadores[ipPuerto].copy()
+        Process(target = aux.publicarResultados, args = ( datos, juegoActivo)).start()
 
     # hago borrado de la pareja en el diccionario
     if jugadoresFinalizados.value == 2:
