@@ -419,6 +419,6 @@ def publicarResultados(lista, juegoActivo):
     if juegoActivo.value:
         mensaje = "RESULTADO EN LA PARTIDA "+str(lista[0])+" para el jugador con apodo "+lista[1]+": "+" Propuso la palabra "+lista[3]+" y finaliza el juego con el estado "+lista[4]+"."
     else:
-        mensaje = " PARTIDA"+str(lista[0])+"ABRUPTAMENTE FINALIZADA"
+        mensaje = " PARTIDA "+str(lista[0])+": ABRUPTAMENTE FINALIZADA"
     print ('Mensaje  a publicar en ', topic, ': ', mensaje)
     cliente.publish(topic,mensaje)
