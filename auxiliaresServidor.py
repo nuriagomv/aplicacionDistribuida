@@ -397,7 +397,7 @@ def on_publish(client, userdata, mid):
     print("Resultado publicado correctamente.\n")
 
 
-def publicarResultados(lista):
+def publicarResultados(lista, juegoActivo):
     """
     Función que permite publicar los resultados de los jugadores en 
     el broker de la web de la asignatura.
@@ -416,6 +416,9 @@ def publicarResultados(lista):
     cliente.connect("wild.mat.ucm.es")
     cliente.on_publish = on_publish
     topic = 'clients/resultadosAhorcado'
-    mensaje = "RESULTADO EN LA PARTIDA "+str(lista[0])+" para el jugador con apodo "+lista[1]+": "+" Propuso la palabra "+lista[3]+" y finaliza el juego con el estado "+lista[4]+"."
+    if juegoActivo.value:
+        mensaje = "RESULTADO EN LA PARTIDA "+str(lista[0])+" para el jugador con apodo "+lista[1]+": "+" Propuso la palabra "+lista[3]+" y finaliza el juego con el estado "+lista[4]+"."
+    else:
+        mensaje = " PARTIDA"+str(lista[0])+"ABRUPTAMENTE FINALIZADA"
     print ('Mensaje  a publicar en ', topic, ': ', mensaje)
     cliente.publish(topic,mensaje)
