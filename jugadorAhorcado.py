@@ -54,6 +54,7 @@ if __name__ == '__main__':
             print(respuesta)
         except EOFError:
             print('parece que ha habido algun error')
+            continuar = False
         
         # si es el ultimo mensaje por parte del juego ahorcado me salgo del bucle
         if ("VAYA" in respuesta) or ("HAS GANADO" in respuesta) or ("HAS AGOTADO" in respuesta) or ("TU CONTRINCANTE" in respuesta):
