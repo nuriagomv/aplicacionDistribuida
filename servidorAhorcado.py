@@ -225,13 +225,15 @@ if __name__ == '__main__':
         juegoActivo = manager.Value("c_bool", True)
         jugadoresFinalizados = manager.Value("i",0)
 
-        for _ in range(2):
+        aceptados = 0
+        while aceptados != 2: # hasta que no haya dos jugadores aceptados (no han tenido fallo de password) no pasa a generar una partida nueva
 
             print ('Aceptando jugadores...')
             try:
                 jugador = servidor.accept()
                 ipPuerto = servidor.last_accepted                
                 print ('Jugador aceptado desde la IP y puerto siguientes: ', ipPuerto)
+                aceptados += 1
                 try:
                     infoApodoJugador = jugador.recv()
                     jugadores[ipPuerto] = [partida, infoApodoJugador]
